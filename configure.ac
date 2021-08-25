@@ -40,6 +40,8 @@ if test "x$ERL_LDFLAGS" = "x"; then
 fi
 AC_MSG_RESULT([$ERL_LDFLAGS])
 
+AX_CPU_VENDOR
+
 LT_INIT()
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
