@@ -72,9 +72,12 @@ uint64_t soa0(rgb_t init_pixel)
 static ERL_NIF_TERM aos0_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     rgb_t init_pixel;
-    init_pixel.r = 0xff;
-    init_pixel.g = 0xff;
-    init_pixel.b = 0xff;
+
+    // light purple
+    init_pixel.r = 0x9f;
+    init_pixel.g = 0x5a;
+    init_pixel.b = 0xae;
+
     uint64_t r;
     r = aos0(init_pixel);
 
