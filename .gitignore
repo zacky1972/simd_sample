@@ -18,6 +18,30 @@ erl_crash.dump
 
 # For Autoconf
 /autom4te.cache/
+/Makefile.in
+/aclocal.m4
+/libtool
+/ar-lib
+/compile
+/install-sh
+/ltmain.sh
+/m4/
+/missing
+/depcomp
+
+# For configure
 /config.log
+/config.status
+/config.guess
+/config.sub
 /configure
+
+# For build files
+/native/.deps
+/native/.dirstamp
+/native/.libs
+/native/*.o
+/native/*.lo
+/priv
+Makefile
 

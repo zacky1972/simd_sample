@@ -17,7 +17,11 @@ defmodule SimdSample.MixProject do
       releases: [{@app, release()}],
       preferred_cli_target: [run: :host, test: :host],
       compilers: [:elixir_make] ++ Mix.compilers(),
-      aliases: [compile: [&configure/1]]
+      aliases: [
+        compile: [&autoreconf/1, &configure/1, "compile"],
+        clean: [&autoreconf/1, &configure/1, "clean"]
+      ],
+      make_clean: ["clean"]
     ]
   end
 
@@ -66,6 +70,10 @@ defmodule SimdSample.MixProject do
       steps: [&Nerves.Release.init/1, :assemble],
       strip_beams: Mix.env() == :prod or [keep: ["Docs"]]
     ]
+  end
+
+  defp autoreconf(_args) do
+    System.cmd("autoreconf", ["-i"])
   end
 
   defp configure(_args) do
