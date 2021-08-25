@@ -18,6 +18,8 @@ defmodule SimdSample do
 
   def aos0_test(), do: raise("NIF aos0_test/0 not implemented")
 
+  def soa0_test(), do: raise("NIF soa0_test/0 not implemented")
+
   @doc """
   Hello world.
 
