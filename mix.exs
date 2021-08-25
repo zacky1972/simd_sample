@@ -35,6 +35,7 @@ defmodule SimdSample.MixProject do
       {:shoehorn, "~> 0.7.0"},
       {:ring_logger, "~> 0.8.1"},
       {:toolshed, "~> 0.2.13"},
+      {:elixir_make, "~> 0.6.2", runtime: false},
 
       # Dependencies for all targets except :host
       {:nerves_runtime, "~> 0.11.3", targets: @all_targets},
