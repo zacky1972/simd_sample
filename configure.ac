@@ -18,9 +18,9 @@ AC_PATH_PROG(ELIXIR, $ELIXIR, elixir)
 
 AC_MSG_CHECKING([setting CROSSCOMPILE])
 if test "x$CROSSCOMPILE" = "x"; then
-AC_MSG_RESULT([no])
+    AC_MSG_RESULT([no])
 else
-AC_MSG_RESULT([yes])
+    AC_MSG_RESULT([yes])
 fi
 
 AC_MSG_CHECKING([setting ERL_EI_INCLUDE_DIR])
