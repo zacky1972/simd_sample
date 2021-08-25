@@ -1,3 +1,6 @@
+{:ok, result} = SimdSample.aos0_test()
+{:ok, ^result} = SimdSample.soa0_test()
+
 Benchee.run(
   %{
     "aos0" => fn -> SimdSample.aos0_test() end,
