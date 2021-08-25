@@ -15,7 +15,9 @@ defmodule SimdSample.MixProject do
       build_embedded: true,
       deps: deps(),
       releases: [{@app, release()}],
-      preferred_cli_target: [run: :host, test: :host]
+      preferred_cli_target: [run: :host, test: :host],
+      compilers: [:elixir_make] ++ Mix.compilers(),
+      aliases: [compile: [&configure/1]]
     ]
   end
 
@@ -64,5 +66,9 @@ defmodule SimdSample.MixProject do
       steps: [&Nerves.Release.init/1, :assemble],
       strip_beams: Mix.env() == :prod or [keep: ["Docs"]]
     ]
+  end
+
+  defp configure(_args) do
+    System.cmd("#{File.cwd!()}/configure", [])
   end
 end
