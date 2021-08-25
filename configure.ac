@@ -16,6 +16,13 @@ AM_PROG_AR
 
 AC_PATH_PROG(ELIXIR, $ELIXIR, elixir)
 
+AC_MSG_CHECKING([setting CROSSCOMPILE])
+if test "x$CROSSCOMPILE" = "x"; then
+AC_MSG_RESULT([no])
+else
+AC_MSG_RESULT([yes])
+fi
+
 AC_MSG_CHECKING([setting ERL_EI_INCLUDE_DIR])
 if test "x$ERL_EI_INCLUDE_DIR" = "x"; then
     AC_SUBST([ERL_EI_INCLUDE_DIR], [$(LC_ALL=en_US.UTF-8 $ELIXIR --eval ':code.root_dir |> to_string() |> Kernel.<>("/usr/include") |> IO.puts')])
