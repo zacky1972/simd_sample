@@ -6,6 +6,9 @@
 #include "alignas.h"
 #include "intrinsics.h"
 
+#define SIZE 256
+#define LOOP 1000
+
 typedef struct rgb_s {
     uint8_t r;
     uint8_t g;
@@ -14,14 +17,14 @@ typedef struct rgb_s {
 
 uint64_t aos0(rgb_t init_pixel)
 {
-    _Alignas(64) rgb_t pixel[256];
-    for(uint_fast16_t i = 0; i < 256; i++) {
+    _Alignas(64) rgb_t pixel[SIZE];
+    for(uint_fast16_t i = 0; i < SIZE; i++) {
         pixel[i].r = init_pixel.r;
         pixel[i].g = init_pixel.g;
         pixel[i].b = init_pixel.b;
     }
     // In monochrome
-    for(uint_fast16_t i = 0; i < 256; i++) {
+    for(uint_fast16_t i = 0; i < SIZE; i++) {
         uint8_t p = (uint8_t)round(0.299 * pixel[i].r + 0.587 * pixel[i].g + 0.114 * pixel[i].b);
         pixel[i].r = p;
         pixel[i].g = p;
@@ -29,7 +32,7 @@ uint64_t aos0(rgb_t init_pixel)
     }
     // Sum up
     uint64_t sum = 0;
-    for(uint_fast16_t i = 0; i < 256; i++) {
+    for(uint_fast16_t i = 0; i < SIZE; i++) {
         sum += pixel[i].r + pixel[i].g + pixel[i].b;
     }
     return sum;
@@ -42,7 +45,7 @@ static ERL_NIF_TERM aos0_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
     init_pixel.g = 0xff;
     init_pixel.b = 0xff;
     uint64_t r;
-    for(uint_fast32_t i = 0; i < 1000; i++) {
+    for(uint_fast32_t i = 0; i < LOOP; i++) {
         r = aos0(init_pixel);
     }
 
