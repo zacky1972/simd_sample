@@ -18,7 +18,7 @@ defmodule SimdSample.MixProject do
       preferred_cli_target: [run: :host, test: :host],
       compilers: [:elixir_make] ++ Mix.compilers(),
       aliases: [
-        compile: [&autoreconf/1, &configure/1, "compile"],
+        compile: [&autoreconf/1, &configure/1, "clean", &install/1, "compile"],
         clean: [&autoreconf/1, &configure/1, "clean"]
       ],
       make_clean: ["clean"]
@@ -77,6 +77,21 @@ defmodule SimdSample.MixProject do
   end
 
   defp configure(_args) do
-    System.cmd("#{File.cwd!()}/configure", [])
+    host = System.get_env("REBAR_TARGET_ARCH")
+    if is_nil(host) do
+      System.cmd(
+        "#{File.cwd!()}/configure",
+        ["--prefix=#{Mix.Project.app_path()}/priv"]
+      )
+    else
+      System.cmd(
+        "#{File.cwd!()}/configure",
+        ["--prefix=#{Mix.Project.app_path()}/priv", "--host=#{host}"]
+      )
+    end
+  end
+
+  defp install(_args) do
+    System.cmd("make", ["install"])
   end
 end
