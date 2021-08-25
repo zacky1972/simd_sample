@@ -35,6 +35,7 @@ erl_crash.dump
 /config.guess
 /config.sub
 /configure
+/configure~
 
 # For build files
 /native/.deps
