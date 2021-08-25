@@ -25,6 +25,7 @@ erl_crash.dump
 /compile
 /install-sh
 /ltmain.sh
+/m4/
 /missing
 /depcomp
 
