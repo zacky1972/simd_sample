@@ -41,9 +41,12 @@ static ERL_NIF_TERM aos0_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
     init_pixel.r = 0xff;
     init_pixel.g = 0xff;
     init_pixel.b = 0xff;
-    aos0(init_pixel);
+    uint64_t r;
+    for(uint_fast32_t i = 0; i < 1000; i++) {
+        r = aos0(init_pixel);
+    }
 
-    return enif_make_atom(env, "ok");
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_uint64(env, r));
 }
 
 static ErlNifFunc nif_funcs[] =
