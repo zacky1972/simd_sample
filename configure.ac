@@ -16,9 +16,16 @@ AM_PROG_AR
 
 AC_PATH_PROG(ELIXIR, $ELIXIR, elixir)
 
+AC_CANONICAL_HOST
+
 AC_MSG_CHECKING([setting CROSSCOMPILE])
 if test "x$CROSSCOMPILE" = "x"; then
     AC_MSG_RESULT([no])
+    AC_MSG_CHECKING([setting host_cpu])
+    AC_MSG_RESULT([$host_cpu])
+    AS_CASE([$host_cpu],
+        [x86_64], AX_CHECK_X86_FEATURES()
+    )
 else
     AC_MSG_RESULT([yes])
 fi
