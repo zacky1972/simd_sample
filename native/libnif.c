@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <erl_nif.h>
 
+#include "alignas.h"
+
 static ERL_NIF_TERM test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     return enif_make_atom(env, "ok");
