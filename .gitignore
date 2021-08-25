@@ -50,3 +50,6 @@ Makefile
 # For upload.sh
 /upload.sh
 
+# For Visual Studio Code
+/.vscode/
+
