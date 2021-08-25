@@ -42,6 +42,7 @@ defmodule SimdSample.MixProject do
       {:ring_logger, "~> 0.8.1"},
       {:toolshed, "~> 0.2.13"},
       {:elixir_make, "~> 0.6.2", runtime: false},
+      {:benchee, "~> 1.0", only: :dev},
 
       # Dependencies for all targets except :host
       {:nerves_runtime, "~> 0.11.3", targets: @all_targets},
