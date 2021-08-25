@@ -45,3 +45,7 @@ erl_crash.dump
 /priv
 Makefile
 /build/
+
+# For upload.sh
+/upload.sh
+
