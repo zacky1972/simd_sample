@@ -82,61 +82,66 @@ uint64_t soa1(rgb_t init_pixel)
     }
     // In monochrome
     for(uint_fast32_t k = 0; k < LOOP; k++) {
-#if defined(HAS_SSE_INSTRUCTIONS) && defined(HAS_SSSE3_INSTRUCTIONS) 
-        float const mono_cons_r = {0.299, 0.299, 0.299, 0.299};
-        float const mono_cons_g = {0.587, 0.587, 0.587, 0.587};
-        float const mono_cons_b = {0.114, 0.114, 0.114, 0.114};
+#if defined(HAS_SSE_INSTRUCTIONS) && defined(HAS_SSE4_1_INSTRUCTIONS) // && defined(HAS_SSSE3_INSTRUCTIONS)
+        float const mono_cons_r[] = {0.299, 0.299, 0.299, 0.299};
+        float const mono_cons_g[] = {0.587, 0.587, 0.587, 0.587};
+        float const mono_cons_b[] = {0.114, 0.114, 0.114, 0.114};
 
         __m128 mono_r = _mm_load_ps(mono_cons_r);
         __m128 mono_g = _mm_load_ps(mono_cons_g);
         __m128 mono_b = _mm_load_ps(mono_cons_b);
 
-        uint8_t const shuffle_higher_cons = {0x04, 0x05, 0x06, 0x07, 0x80, 0x80, 0x80, 0x80};
+        uint8_t const shuffle_higher_cons[] = {0x04, 0x05, 0x06, 0x07, 0x80, 0x80, 0x80, 0x80};
+        uint8_t shuffle_lower_cons[] = {0x80, 0x80, 0x80, 0x80, 0x00, 0x01, 0x02, 0x03};
         __m64 shuffle_higher = *((__m64 *)shuffle_higher_cons);
+        __m64 shuffle_lower = *((__m64 *)shuffle_lower_cons);
+
+        uint32_t const sign_mask_u8[] = {0x80000000, 0x80000000, 0x80000000, 0x80000000};
+        __m128 sign_mask = *((__m128 *)sign_mask_u8);
+
+        float const half_f[] = {0.5, 0.5, 0.5, 0.5};
+        __m128 half_mask = _mm_load_ps(half_f);
 
         for(uint_fast16_t i = 0; i < SIZE; i += 8) {
             uint8_t *ptr_r = &pixel_r[i];
-            _m64 pru = *((__m64 *)ptr_r);
+            __m64 pru = *((__m64 *)ptr_r);
             __m128 prf_l = _mm_cvtpu8_ps(pru);
             __m128 prf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pru, shuffle_higher));
             prf_l = _mm_mul_ps(prf_l, mono_r);
             prf_h = _mm_mul_ps(prf_h, mono_r);
 
             uint8_t *ptr_g = &pixel_g[i];
-            _m64 pgu = *((__m64 *)ptr_g);
+            __m64 pgu = *((__m64 *)ptr_g);
             __m128 pgf_l = _mm_cvtpu8_ps(pgu);
             __m128 pgf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pgu, shuffle_higher));
             pgf_l = _mm_mul_ps(pgf_l, mono_g);
             pgf_h = _mm_mul_ps(pgf_h, mono_g);
 
             uint8_t *ptr_b = &pixel_b[i];
-            _m64 pbu = *((__m64 *)ptr_b);
+            __m64 pbu = *((__m64 *)ptr_b);
             __m128 pbf_l = _mm_cvtpu8_ps(pbu);
             __m128 pbf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pbu, shuffle_higher));
             pbf_l = _mm_mul_ps(pbf_l, mono_b);
             pbf_h = _mm_mul_ps(pbf_h, mono_b);
 
-            pfl = _mm_add_ps(_mm_add_ps(prf_l, pgf_l), pbf_l);
-            pfh = _mm_add_ps(_mm_add_ps(prf_h, pgf_h), pbf_h);
+            __m128 pfl = _mm_add_ps(_mm_add_ps(prf_l, pgf_l), pbf_l);
+            __m128 pfh = _mm_add_ps(_mm_add_ps(prf_h, pgf_h), pbf_h);
 
-            float pfla[4], pfha[4];
-            _mm_store_ps(pfla, pfl);
-            _mm_store_ps(pfha, pfh);
+            __m128 sign_pfl = _mm_and_ps(pfl, sign_mask);
+            __m128 sign_pfh = _mm_and_ps(pfh, sign_mask);
+            __m128 half_pfl = _mm_or_ps(sign_pfl, half_mask);
+            __m128 half_pfh = _mm_or_ps(sign_pfh, half_mask);
 
-            uint8_t pl[4], ph[4];
+            pfl = _mm_round_ps(_mm_add_ps(pfl, half_pfl), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+            pfh = _mm_round_ps(_mm_add_ps(pfh, half_pfh), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
 
-            for(uint_fast8_t j = 0; j < 4; j++) {
-                pl[j] = (uint8_t)round(pfla[j]);
-                pixel_r[i + j] = pl[j];
-                pixel_g[i + j] = pl[j];
-                pixel_b[i + j] = pl[j];
-            }
-            for(uint_fast8_t j = 0; j < 4; j++) {
-                ph[j] = (uint8_t)round(pfha[j]);
-                pixel_r[i + j + 4] = ph[j];
-                pixel_g[i + j + 4] = ph[j];
-                pixel_b[i + j + 4] = ph[j];
-            }
+            __m64 pul = _mm_cvtps_pi8(pfl);
+            __m64 puh = _mm_shuffle_pi8(_mm_cvtps_pi8(pfh), shuffle_lower);
+            __m64 pu = _mm_max_pu8(pul, puh);
+
+            _mm_stream_pi((__m64 *)ptr_r, pu);
+            _mm_stream_pi((__m64 *)ptr_g, pu);
+            _mm_stream_pi((__m64 *)ptr_b, pu);
         }                  
 #else
         for(uint_fast16_t i = 0; i < SIZE; i++) {
