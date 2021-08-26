@@ -187,9 +187,9 @@ uint64_t soa1(rgb_t init_pixel)
             pub_256 = _mm256_loadu_si256((__m256i *)&pixel_b[i]);
 
             __m256i extracted_pur64[4], extracted_pug64[4], extracted_pub64[4];
-            mm256_extract_epi64_set_to_m256(pur_256, extracted_pur64);
-            mm256_extract_epi64_set_to_m256(pug_256, extracted_pug64);
-            mm256_extract_epi64_set_to_m256(pub_256, extracted_pub64);
+            mm256_unsigned_extend_epi64_to_m256(pur_256, extracted_pur64);
+            mm256_unsigned_extend_epi64_to_m256(pug_256, extracted_pug64);
+            mm256_unsigned_extend_epi64_to_m256(pub_256, extracted_pub64);
 
             __m256i epi32_pixel_r[4], epi32_pixel_g[4], epi32_pixel_b[4];
             mm256_epi32_extract_epi8x(0, extracted_pur64, epi32_pixel_r);

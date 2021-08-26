@@ -1,5 +1,5 @@
-#ifndef MM256_EXTRACT_EPI64_SET_TO_M256_H
-#define MM256_EXTRACT_EPI64_SET_TO_M256_H
+#ifndef MM256_UNSIGNED_EXTEND_EPI64_TO_M256_H
+#define MM256_UNSIGNED_EXTEND_EPI64_TO_M256_H
 
 #include "intrinsics.h"
 
@@ -25,7 +25,7 @@ Operation
 
 */
 
-inline void mm256_extract_epi64_set_to_m256(__m256i value, __m256i *results)
+inline void mm256_unsigned_extend_epi64_to_m256(__m256i value, __m256i *results)
 {
     results[0] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 0), 0, 0, 0);
     results[1] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 1), 0, 0, 0);
@@ -36,4 +36,4 @@ inline void mm256_extract_epi64_set_to_m256(__m256i value, __m256i *results)
 #endif
 #endif
 
-#endif // MM256_EXTRACT_EPI64_SET_TO_M256_H
+#endif // MM256_UNSIGNED_EXTEND_EPI64_TO_M256_H
