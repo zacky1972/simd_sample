@@ -16,11 +16,120 @@ typedef struct rgb_s {
 } rgb_t;
 
 #if __x86_64__ 
-//#if defined(HAVE_AVX_INSTRUCTIONS)
+#if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
+extern inline void extracted64(__m256i value, __m256i *results);
 
-//#error
-//#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
-#if defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+inline void extracted64(__m256i value, __m256i *results)
+{
+    results[0] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 0), 0, 0, 0);
+    results[1] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 1), 0, 0, 0);
+    results[2] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 2), 0, 0, 0);
+    results[3] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 3), 0, 0, 0);
+}
+
+static _Alignas(64) __m256i shuffle_epi8_m256[2];
+
+void init_shuffle_epi8()
+{
+    uint8_t shuffle_epi8_u8[] = {
+        0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80,
+        0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80, 0x80,
+        0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+        0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+    
+        0x04, 0x80, 0x80, 0x80, 0x05, 0x80, 0x80, 0x80,
+        0x06, 0x80, 0x80, 0x80, 0x07, 0x80, 0x80, 0x80,
+        0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+        0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+    };
+
+    shuffle_epi8_m256[0] = _mm256_loadu_si256((__m256i *)&shuffle_epi8_u8[0]);
+    shuffle_epi8_m256[1] = _mm256_loadu_si256((__m256i *)&shuffle_epi8_u8[32]);
+}
+
+static _Alignas(64) __m256i permutevar8x32_epi32_m256[1];
+
+void init_permute_var8x32_epi32()
+{
+    uint8_t permutevar8x32_epi32_u8[] = {
+        0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+        0x06, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+    };
+
+    permutevar8x32_epi32_m256[0] = _mm256_loadu_si256((__m256i *)&permutevar8x32_epi32_u8[0]);
+}
+
+static _Alignas(64) __m256 sign_mask_256;
+
+void init_sign_mask()
+{
+    uint32_t const sign_mask_u8[] = {
+        0x80000000, 0x80000000, 0x80000000, 0x80000000,
+        0x80000000, 0x80000000, 0x80000000, 0x80000000,
+    };
+    sign_mask_256 = *((__m256 *)sign_mask_u8);
+}
+
+static _Alignas(64) __m256 half_mask_256;
+
+void init_half_mask()
+{
+    float const half_f[] = {
+        0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5
+    };
+    half_mask_256 = _mm256_load_ps(half_f);
+}
+
+extern inline void mm256_epi32_extract_epi8x(int index, __m256i *value, __m256i *result);
+
+inline void mm256_epi32_extract_epi8x(int index, __m256i *value, __m256i *result)
+{
+    __m256i shuffled_lower_256[2];
+    __m256i shuffled_256[1];
+    shuffled_lower_256[0] = _mm256_shuffle_epi8(value[index], shuffle_epi8_m256[0]);
+    shuffled_lower_256[1] = _mm256_shuffle_epi8(value[index], shuffle_epi8_m256[1]);
+    shuffled_lower_256[1] = _mm256_permutevar8x32_epi32(shuffled_lower_256[1], permutevar8x32_epi32_m256[0]);
+    shuffled_256[0] = _mm256_max_epi32(shuffled_lower_256[0], shuffled_lower_256[1]);
+    _mm256_storeu_si256(&result[index], shuffled_256[0]);
+}
+
+extern inline __m256i mm256_round_cvtps_epi32(__m256 value);
+
+inline __m256i mm256_round_cvtps_epi32(__m256 value)
+{
+    __m256 sign_floatx8, half_floatx8, result;
+    sign_floatx8 = _mm256_and_ps(value, sign_mask_256);
+    half_floatx8 = _mm256_or_ps(sign_floatx8, half_mask_256);
+    result = _mm256_round_ps(_mm256_add_ps(value, half_floatx8), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+    return _mm256_cvtps_epi32(result);
+}
+
+static _Alignas(64) __m256 mono_r_256, mono_g_256, mono_b_256;
+
+void init_mono_256()
+{
+    _Alignas(64) float const mono_cons_r[] = {
+        0.299, 0.299, 0.299, 0.299,
+        0.299, 0.299, 0.299, 0.299,
+    };
+    _Alignas(64) float const mono_cons_g[] = {
+        0.587, 0.587, 0.587, 0.587,
+        0.587, 0.587, 0.587, 0.587,
+    };
+    _Alignas(64) float const mono_cons_b[] = {
+        0.114, 0.114, 0.114, 0.114,
+        0.114, 0.114, 0.114, 0.114
+    };
+
+    mono_r_256 = _mm256_load_ps(mono_cons_r);
+    mono_g_256 = _mm256_load_ps(mono_cons_g);
+    mono_b_256 = _mm256_load_ps(mono_cons_b);
+}
+
+#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
 _Alignas(64) __m128 mono_r_128, mono_g_128, mono_b_128;
 _Alignas(64) __m64 shuffle_higher_64, shuffle_lower_64;
 _Alignas(64) __m128 sign_mask_128, half_mask_128;
@@ -32,11 +141,12 @@ _Alignas(64) __m128 sign_mask_128, half_mask_128;
 int load(ErlNifEnv *caller_env, void **priv_data, ERL_NIF_TERM load_info)
 {
 #if __x86_64__ 
-//#if defined(HAVE_AVX_INSTRUCTIONS)
-
-//#error
-//#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
-#if defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+#if defined(HAVE_AVX_INSTRUCTIONS)
+    init_mono_256();
+    init_shuffle_epi8();
+    init_permute_var8x32_epi32();
+    init_sign_mask();
+#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
     _Alignas(64) float const mono_cons_r[] = {0.299, 0.299, 0.299, 0.299};
     _Alignas(64) float const mono_cons_g[] = {0.587, 0.587, 0.587, 0.587};
     _Alignas(64) float const mono_cons_b[] = {0.114, 0.114, 0.114, 0.114};
@@ -136,11 +246,88 @@ uint64_t soa1(rgb_t init_pixel)
     // In monochrome
     for(uint_fast32_t k = 0; k < LOOP; k++) {
 #if __x86_64__ 
-//#if defined(HAVE_AVX_INSTRUCTIONS)
+#if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
+        for(uint_fast16_t i = 0; i < SIZE; i += 32) {
+            __m256i pur_256, pug_256, pub_256;
+            pur_256 = _mm256_loadu_si256((__m256i *)&pixel_r[i]);
+            pug_256 = _mm256_loadu_si256((__m256i *)&pixel_g[i]);
+            pub_256 = _mm256_loadu_si256((__m256i *)&pixel_b[i]);
 
-//#error
-//#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
-#if defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+            __m256i extracted_pur64[4], extracted_pug64[4], extracted_pub64[4];
+            extracted64(pur_256, extracted_pur64);
+            extracted64(pug_256, extracted_pug64);
+            extracted64(pub_256, extracted_pub64);
+
+            __m256i epi32_pixel_r[4], epi32_pixel_g[4], epi32_pixel_b[4];
+            mm256_epi32_extract_epi8x(0, extracted_pur64, epi32_pixel_r);
+            mm256_epi32_extract_epi8x(1, extracted_pur64, epi32_pixel_r);
+            mm256_epi32_extract_epi8x(2, extracted_pur64, epi32_pixel_r);
+            mm256_epi32_extract_epi8x(3, extracted_pur64, epi32_pixel_r);
+            mm256_epi32_extract_epi8x(0, extracted_pug64, epi32_pixel_g);
+            mm256_epi32_extract_epi8x(1, extracted_pug64, epi32_pixel_g);
+            mm256_epi32_extract_epi8x(2, extracted_pug64, epi32_pixel_g);
+            mm256_epi32_extract_epi8x(3, extracted_pug64, epi32_pixel_g);
+            mm256_epi32_extract_epi8x(0, extracted_pub64, epi32_pixel_b);
+            mm256_epi32_extract_epi8x(1, extracted_pub64, epi32_pixel_b);
+            mm256_epi32_extract_epi8x(2, extracted_pub64, epi32_pixel_b);
+            mm256_epi32_extract_epi8x(3, extracted_pub64, epi32_pixel_b);
+
+            __m256 floatx8_pixel_r[4], floatx8_pixel_g[4], floatx8_pixel_b[4];
+            floatx8_pixel_r[0] = _mm256_cvtepi32_ps(epi32_pixel_r[0]);
+            floatx8_pixel_r[1] = _mm256_cvtepi32_ps(epi32_pixel_r[1]);
+            floatx8_pixel_r[2] = _mm256_cvtepi32_ps(epi32_pixel_r[2]);
+            floatx8_pixel_r[3] = _mm256_cvtepi32_ps(epi32_pixel_r[3]);
+            floatx8_pixel_g[0] = _mm256_cvtepi32_ps(epi32_pixel_g[0]);
+            floatx8_pixel_g[1] = _mm256_cvtepi32_ps(epi32_pixel_g[1]);
+            floatx8_pixel_g[2] = _mm256_cvtepi32_ps(epi32_pixel_g[2]);
+            floatx8_pixel_g[3] = _mm256_cvtepi32_ps(epi32_pixel_g[3]);
+            floatx8_pixel_b[0] = _mm256_cvtepi32_ps(epi32_pixel_b[0]);
+            floatx8_pixel_b[1] = _mm256_cvtepi32_ps(epi32_pixel_b[1]);
+            floatx8_pixel_b[2] = _mm256_cvtepi32_ps(epi32_pixel_b[2]);
+            floatx8_pixel_b[3] = _mm256_cvtepi32_ps(epi32_pixel_b[3]);
+
+            floatx8_pixel_r[0] = _mm256_mul_ps(floatx8_pixel_r[0], mono_r_256);
+            floatx8_pixel_r[1] = _mm256_mul_ps(floatx8_pixel_r[1], mono_r_256);
+            floatx8_pixel_r[2] = _mm256_mul_ps(floatx8_pixel_r[2], mono_r_256);
+            floatx8_pixel_r[3] = _mm256_mul_ps(floatx8_pixel_r[3], mono_r_256);
+            floatx8_pixel_g[0] = _mm256_mul_ps(floatx8_pixel_g[0], mono_g_256);
+            floatx8_pixel_g[1] = _mm256_mul_ps(floatx8_pixel_g[1], mono_g_256);
+            floatx8_pixel_g[2] = _mm256_mul_ps(floatx8_pixel_g[2], mono_g_256);
+            floatx8_pixel_g[3] = _mm256_mul_ps(floatx8_pixel_g[3], mono_g_256);
+            floatx8_pixel_b[0] = _mm256_mul_ps(floatx8_pixel_b[0], mono_b_256);
+            floatx8_pixel_b[1] = _mm256_mul_ps(floatx8_pixel_b[1], mono_b_256);
+            floatx8_pixel_b[2] = _mm256_mul_ps(floatx8_pixel_b[2], mono_b_256);
+            floatx8_pixel_b[3] = _mm256_mul_ps(floatx8_pixel_b[3], mono_b_256);
+
+            __m256 mono[4];
+            mono[0] = _mm256_add_ps(_mm256_add_ps(floatx8_pixel_r[0], floatx8_pixel_g[0]), floatx8_pixel_b[0]);
+            mono[1] = _mm256_add_ps(_mm256_add_ps(floatx8_pixel_r[1], floatx8_pixel_g[1]), floatx8_pixel_b[1]);
+            mono[2] = _mm256_add_ps(_mm256_add_ps(floatx8_pixel_r[2], floatx8_pixel_g[2]), floatx8_pixel_b[2]);
+            mono[3] = _mm256_add_ps(_mm256_add_ps(floatx8_pixel_r[3], floatx8_pixel_g[3]), floatx8_pixel_b[3]);
+
+            __m256i m[4];
+            m[0] = mm256_round_cvtps_epi32(mono[0]);
+            m[1] = mm256_round_cvtps_epi32(mono[1]);
+            m[2] = mm256_round_cvtps_epi32(mono[2]);
+            m[3] = mm256_round_cvtps_epi32(mono[3]);
+
+            char *s = (char *)m;
+            __m256i pr = _mm256_set_epi8(
+                s[0x7c], s[0x78], s[0x74], s[0x70],
+                s[0x6c], s[0x68], s[0x64], s[0x60],
+                s[0x5c], s[0x58], s[0x54], s[0x50],
+                s[0x4c], s[0x48], s[0x44], s[0x40],
+                s[0x3c], s[0x38], s[0x34], s[0x30],
+                s[0x2c], s[0x28], s[0x24], s[0x20],
+                s[0x1c], s[0x18], s[0x14], s[0x10],
+                s[0x0c], s[0x08], s[0x04], s[0x00]
+            );
+
+            _mm256_storeu_si256((__m256i *)&pixel_r[i], pr);
+            _mm256_storeu_si256((__m256i *)&pixel_g[i], pr);
+            _mm256_storeu_si256((__m256i *)&pixel_b[i], pr);
+        }
+#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
         for(uint_fast16_t i = 0; i < SIZE; i += 8) {
             uint8_t *ptr_r = &pixel_r[i];
             uint8_t *ptr_g = &pixel_g[i];
