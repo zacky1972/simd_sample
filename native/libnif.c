@@ -9,18 +9,10 @@
 
 #include "alignas.h"
 #include "intrinsics.h"
+#include "basic_intrinsics.h"
 
 #if __x86_64__ 
 #if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
-extern inline void extracted64(__m256i value, __m256i *results);
-
-inline void extracted64(__m256i value, __m256i *results)
-{
-    results[0] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 0), 0, 0, 0);
-    results[1] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 1), 0, 0, 0);
-    results[2] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 2), 0, 0, 0);
-    results[3] = _mm256_setr_epi64x(_mm256_extract_epi64(value, 3), 0, 0, 0);
-}
 
 static _Alignas(64) __m256i shuffle_epi8_m256[2];
 
@@ -195,9 +187,9 @@ uint64_t soa1(rgb_t init_pixel)
             pub_256 = _mm256_loadu_si256((__m256i *)&pixel_b[i]);
 
             __m256i extracted_pur64[4], extracted_pug64[4], extracted_pub64[4];
-            extracted64(pur_256, extracted_pur64);
-            extracted64(pug_256, extracted_pug64);
-            extracted64(pub_256, extracted_pub64);
+            mm256_extract_epi64_set_to_m256(pur_256, extracted_pur64);
+            mm256_extract_epi64_set_to_m256(pug_256, extracted_pug64);
+            mm256_extract_epi64_set_to_m256(pub_256, extracted_pub64);
 
             __m256i epi32_pixel_r[4], epi32_pixel_g[4], epi32_pixel_b[4];
             mm256_epi32_extract_epi8x(0, extracted_pur64, epi32_pixel_r);
