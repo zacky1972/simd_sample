@@ -15,6 +15,59 @@ typedef struct rgb_s {
     uint8_t b;
 } rgb_t;
 
+#if __x86_64__ 
+//#if defined(HAVE_AVX_INSTRUCTIONS)
+
+//#error
+//#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+#if defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+_Alignas(64) __m128 mono_r_128, mono_g_128, mono_b_128;
+_Alignas(64) __m64 shuffle_higher_64, shuffle_lower_64;
+_Alignas(64) __m128 sign_mask_128, half_mask_128;
+#else
+#endif
+#else // x86_64
+#endif
+
+int load(ErlNifEnv *caller_env, void **priv_data, ERL_NIF_TERM load_info)
+{
+#if __x86_64__ 
+//#if defined(HAVE_AVX_INSTRUCTIONS)
+
+//#error
+//#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+#if defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+    _Alignas(64) float const mono_cons_r[] = {0.299, 0.299, 0.299, 0.299};
+    _Alignas(64) float const mono_cons_g[] = {0.587, 0.587, 0.587, 0.587};
+    _Alignas(64) float const mono_cons_b[] = {0.114, 0.114, 0.114, 0.114};
+
+    mono_r_128 = _mm_load_ps(mono_cons_r);
+    mono_g_128 = _mm_load_ps(mono_cons_g);
+    mono_b_128 = _mm_load_ps(mono_cons_b);
+
+    _Alignas(64) uint8_t const shuffle_higher_cons[] = {0x04, 0x05, 0x06, 0x07, 0x80, 0x80, 0x80, 0x80};
+    _Alignas(64) uint8_t shuffle_lower_cons[] = {0x80, 0x80, 0x80, 0x80, 0x00, 0x01, 0x02, 0x03};
+    shuffle_higher_64 = *((__m64 *)shuffle_higher_cons);
+    shuffle_lower_64 = *((__m64 *)shuffle_lower_cons);
+
+    _Alignas(64) uint32_t const sign_mask_u8[] = {0x80000000, 0x80000000, 0x80000000, 0x80000000};
+    sign_mask_128 = *((__m128 *)sign_mask_u8);
+
+    _Alignas(64) float const half_f[] = {0.5, 0.5, 0.5, 0.5};
+    half_mask_128 = _mm_load_ps(half_f);
+#else
+#endif
+#else // x86_64
+#endif
+
+    return 0;
+}
+
+int upgrade(ErlNifEnv *caller_env, void **priv_data, void **old_priv_data, ERL_NIF_TERM load_info)
+{
+    return load(caller_env, priv_data, load_info);
+}
+
 uint64_t aos0(rgb_t init_pixel)
 {
     _Alignas(64) rgb_t pixel[SIZE];
@@ -82,61 +135,49 @@ uint64_t soa1(rgb_t init_pixel)
     }
     // In monochrome
     for(uint_fast32_t k = 0; k < LOOP; k++) {
-#if defined(HAS_SSE_INSTRUCTIONS) && defined(HAS_SSE4_1_INSTRUCTIONS) // && defined(HAS_SSSE3_INSTRUCTIONS)
-        float const mono_cons_r[] = {0.299, 0.299, 0.299, 0.299};
-        float const mono_cons_g[] = {0.587, 0.587, 0.587, 0.587};
-        float const mono_cons_b[] = {0.114, 0.114, 0.114, 0.114};
+#if __x86_64__ 
+//#if defined(HAVE_AVX_INSTRUCTIONS)
 
-        __m128 mono_r = _mm_load_ps(mono_cons_r);
-        __m128 mono_g = _mm_load_ps(mono_cons_g);
-        __m128 mono_b = _mm_load_ps(mono_cons_b);
-
-        uint8_t const shuffle_higher_cons[] = {0x04, 0x05, 0x06, 0x07, 0x80, 0x80, 0x80, 0x80};
-        uint8_t shuffle_lower_cons[] = {0x80, 0x80, 0x80, 0x80, 0x00, 0x01, 0x02, 0x03};
-        __m64 shuffle_higher = *((__m64 *)shuffle_higher_cons);
-        __m64 shuffle_lower = *((__m64 *)shuffle_lower_cons);
-
-        uint32_t const sign_mask_u8[] = {0x80000000, 0x80000000, 0x80000000, 0x80000000};
-        __m128 sign_mask = *((__m128 *)sign_mask_u8);
-
-        float const half_f[] = {0.5, 0.5, 0.5, 0.5};
-        __m128 half_mask = _mm_load_ps(half_f);
-
+//#error
+//#elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
+#if defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
         for(uint_fast16_t i = 0; i < SIZE; i += 8) {
             uint8_t *ptr_r = &pixel_r[i];
-            __m64 pru = *((__m64 *)ptr_r);
-            __m128 prf_l = _mm_cvtpu8_ps(pru);
-            __m128 prf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pru, shuffle_higher));
-            prf_l = _mm_mul_ps(prf_l, mono_r);
-            prf_h = _mm_mul_ps(prf_h, mono_r);
-
             uint8_t *ptr_g = &pixel_g[i];
-            __m64 pgu = *((__m64 *)ptr_g);
-            __m128 pgf_l = _mm_cvtpu8_ps(pgu);
-            __m128 pgf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pgu, shuffle_higher));
-            pgf_l = _mm_mul_ps(pgf_l, mono_g);
-            pgf_h = _mm_mul_ps(pgf_h, mono_g);
-
             uint8_t *ptr_b = &pixel_b[i];
+
+            __m64 pru = *((__m64 *)ptr_r);
+            __m64 pgu = *((__m64 *)ptr_g);
             __m64 pbu = *((__m64 *)ptr_b);
+
+            __m128 prf_l = _mm_cvtpu8_ps(pru);
+            __m128 prf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pru, shuffle_higher_64));
+            prf_l = _mm_mul_ps(prf_l, mono_r_128);
+            prf_h = _mm_mul_ps(prf_h, mono_r_128);
+
+            __m128 pgf_l = _mm_cvtpu8_ps(pgu);
+            __m128 pgf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pgu, shuffle_higher_64));
+            pgf_l = _mm_mul_ps(pgf_l, mono_g_128);
+            pgf_h = _mm_mul_ps(pgf_h, mono_g_128);
+
             __m128 pbf_l = _mm_cvtpu8_ps(pbu);
-            __m128 pbf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pbu, shuffle_higher));
-            pbf_l = _mm_mul_ps(pbf_l, mono_b);
-            pbf_h = _mm_mul_ps(pbf_h, mono_b);
+            __m128 pbf_h = _mm_cvtpu8_ps(_mm_shuffle_pi8(pbu, shuffle_higher_64));
+            pbf_l = _mm_mul_ps(pbf_l, mono_b_128);
+            pbf_h = _mm_mul_ps(pbf_h, mono_b_128);
 
             __m128 pfl = _mm_add_ps(_mm_add_ps(prf_l, pgf_l), pbf_l);
             __m128 pfh = _mm_add_ps(_mm_add_ps(prf_h, pgf_h), pbf_h);
 
-            __m128 sign_pfl = _mm_and_ps(pfl, sign_mask);
-            __m128 sign_pfh = _mm_and_ps(pfh, sign_mask);
-            __m128 half_pfl = _mm_or_ps(sign_pfl, half_mask);
-            __m128 half_pfh = _mm_or_ps(sign_pfh, half_mask);
+            __m128 sign_pfl = _mm_and_ps(pfl, sign_mask_128);
+            __m128 sign_pfh = _mm_and_ps(pfh, sign_mask_128);
+            __m128 half_pfl = _mm_or_ps(sign_pfl, half_mask_128);
+            __m128 half_pfh = _mm_or_ps(sign_pfh, half_mask_128);
 
             pfl = _mm_round_ps(_mm_add_ps(pfl, half_pfl), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
             pfh = _mm_round_ps(_mm_add_ps(pfh, half_pfh), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
 
             __m64 pul = _mm_cvtps_pi8(pfl);
-            __m64 puh = _mm_shuffle_pi8(_mm_cvtps_pi8(pfh), shuffle_lower);
+            __m64 puh = _mm_shuffle_pi8(_mm_cvtps_pi8(pfh), shuffle_lower_64);
             __m64 pu = _mm_max_pu8(pul, puh);
 
             _mm_stream_pi((__m64 *)ptr_r, pu);
@@ -144,6 +185,15 @@ uint64_t soa1(rgb_t init_pixel)
             _mm_stream_pi((__m64 *)ptr_b, pu);
         }                  
 #else
+#error
+#endif
+        for(uint_fast16_t i = 0; i < SIZE; i++) {
+            uint8_t p = (uint8_t)round(0.299 * pixel_r[i] + 0.587 * pixel_g[i] + 0.114 * pixel_b[i]);
+            pixel_r[i] = p;
+            pixel_g[i] = p;
+            pixel_b[i] = p;
+        }
+#else // x86_64
         for(uint_fast16_t i = 0; i < SIZE; i++) {
             uint8_t p = (uint8_t)round(0.299 * pixel_r[i] + 0.587 * pixel_g[i] + 0.114 * pixel_b[i]);
             pixel_r[i] = p;
@@ -212,4 +262,4 @@ static ErlNifFunc nif_funcs[] =
     {"soa1_test", 0, soa1_test}
 };
 
-ERL_NIF_INIT(Elixir.SimdSample, nif_funcs, NULL, NULL, NULL, NULL)
+ERL_NIF_INIT(Elixir.SimdSample, nif_funcs, &load, NULL, &upgrade, NULL)
