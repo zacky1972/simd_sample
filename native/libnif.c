@@ -14,28 +14,6 @@
 #if __x86_64__ 
 #if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
 
-static _Alignas(64) __m256 sign_mask_256;
-
-void init_sign_mask()
-{
-    uint32_t const sign_mask_u8[] = {
-        0x80000000, 0x80000000, 0x80000000, 0x80000000,
-        0x80000000, 0x80000000, 0x80000000, 0x80000000,
-    };
-    sign_mask_256 = *((__m256 *)sign_mask_u8);
-}
-
-static _Alignas(64) __m256 half_mask_256;
-
-void init_half_mask()
-{
-    float const half_f[] = {
-        0.5, 0.5, 0.5, 0.5,
-        0.5, 0.5, 0.5, 0.5
-    };
-    half_mask_256 = _mm256_load_ps(half_f);
-}
-
 /*
 
     result[index][7:0]     = value[index][7:0]
@@ -62,17 +40,6 @@ extern inline void mm256_epi32_extract_epi8x(int index, __m256i *value, __m256i 
 inline void mm256_epi32_extract_epi8x(int index, __m256i *value, __m256i *result)
 {
     _mm256_storeu_si256(&result[index], mm256_unsigned_extend_epi8_to_epi32(value[index]));
-}
-
-extern inline __m256i mm256_round_cvtps_epi32(__m256 value);
-
-inline __m256i mm256_round_cvtps_epi32(__m256 value)
-{
-    __m256 sign_floatx8, half_floatx8, result;
-    sign_floatx8 = _mm256_and_ps(value, sign_mask_256);
-    half_floatx8 = _mm256_or_ps(sign_floatx8, half_mask_256);
-    result = _mm256_round_ps(_mm256_add_ps(value, half_floatx8), _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
-    return _mm256_cvtps_epi32(result);
 }
 
 static _Alignas(64) __m256 mono_r_256, mono_g_256, mono_b_256;
@@ -112,7 +79,6 @@ int load(ErlNifEnv *caller_env, void **priv_data, ERL_NIF_TERM load_info)
 #if defined(HAVE_AVX_INSTRUCTIONS)
     init_mono_256();
     init_basic_intrinsics();
-    init_sign_mask();
 #elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
     _Alignas(64) float const mono_cons_r[] = {0.299, 0.299, 0.299, 0.299};
     _Alignas(64) float const mono_cons_g[] = {0.587, 0.587, 0.587, 0.587};
