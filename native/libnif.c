@@ -321,11 +321,21 @@ static ERL_NIF_TERM soa1_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_uint64(env, r));
 }
 
+#ifdef HAVE_SKETCH_SKETCH_C
+ERL_NIF_TERM sketch(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+#else
+static ERL_NIF_TERM sketch(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+    return enif_make_atom(env, "not_implemented");
+}
+#endif
+
 static ErlNifFunc nif_funcs[] =
 {
     {"aos0_test", 0, aos0_test},
     {"soa0_test", 0, soa0_test},
-    {"soa1_test", 0, soa1_test}
+    {"soa1_test", 0, soa1_test},
+    {"sketch", 1, sketch}
 };
 
 ERL_NIF_INIT(Elixir.SimdSample, nif_funcs, &load, NULL, &upgrade, NULL)

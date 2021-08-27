@@ -54,6 +54,9 @@ if test "x$ERL_LDFLAGS" = "x"; then
 fi
 AC_MSG_RESULT([$ERL_LDFLAGS])
 
+AC_MSG_CHECKING([find sketch files])
+AC_CHECK_FILES([sketch/sketch.c], AM_CONDITIONAL(SKETCH_C, test true = true), AM_CONDITIONAL(SKETCH_C, test false = true))
+
 LT_INIT()
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

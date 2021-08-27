@@ -55,3 +55,6 @@ Makefile
 # For Visual Studio Code
 /.vscode/
 
+# For sketch files
+/sketch/
+
