@@ -1,6 +1,6 @@
 # SimdSample
 
-**TODO: Add description**
+Monochrome SIMD sample code both on x86_64 and aarch64.
 
 ## Targets
 
