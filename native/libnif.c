@@ -213,21 +213,21 @@ uint64_t soa1(rgb_t init_pixel)
             float32x4_t f32x4_pixel_g_high_low = vcvtq_f32_u32(u32x4_pixel_g_high_low);
             float32x4_t f32x4_pixel_m_high_low = vmulq_f32(f32x4_pixel_r_high_low, f32x4_mono_r);
 
-            f32x4_pixel_m_high_low = vaddq_f32(f32x4_pixel_m_high_low, vmulq_f32(f32x4_pixel_g_high_low, f32x4_mono_g));
+            f32x4_pixel_m_high_low = vmlaq_f32(f32x4_pixel_m_high_low, f32x4_pixel_g_high_low, f32x4_mono_g);
 
             uint32x4_t u32x4_pixel_b_high_low  = vmovl_u16(vget_low_u16(u16x8_pixel_b_high));
             uint32x4_t u32x4_pixel_b_high_high = vmovl_high_u16(u16x8_pixel_b_high);
             float32x4_t f32x4_pixel_b_high_low = vcvtq_f32_u32(u32x4_pixel_b_high_low);
 
-            f32x4_pixel_m_high_low = vaddq_f32(f32x4_pixel_m_high_low, vmulq_f32(f32x4_pixel_b_high_low, f32x4_mono_b));
+            f32x4_pixel_m_high_low = vmlaq_f32(f32x4_pixel_m_high_low, f32x4_pixel_b_high_low, f32x4_mono_b);
 
             float32x4_t f32x4_pixel_r_high_high = vcvtq_f32_u32(u32x4_pixel_r_high_high);
             float32x4_t f32x4_pixel_g_high_high = vcvtq_f32_u32(u32x4_pixel_g_high_high);
             float32x4_t f32x4_pixel_m_high_high = vmulq_f32(f32x4_pixel_r_high_high, f32x4_mono_r);
 
-            f32x4_pixel_m_high_high = vaddq_f32(f32x4_pixel_m_high_high, vmulq_f32(f32x4_pixel_g_high_high, f32x4_mono_g));
+            f32x4_pixel_m_high_high = vmlaq_f32(f32x4_pixel_m_high_high, f32x4_pixel_g_high_high, f32x4_mono_g);
             float32x4_t f32x4_pixel_b_high_high = vcvtq_f32_u32(u32x4_pixel_b_high_high);
-            f32x4_pixel_m_high_high = vaddq_f32(f32x4_pixel_m_high_high, vmulq_f32(f32x4_pixel_b_high_high, f32x4_mono_b));
+            f32x4_pixel_m_high_high = vmlaq_f32(f32x4_pixel_m_high_high, f32x4_pixel_b_high_high, f32x4_mono_b);
 
             uint16x8_t u16x8_pixel_m_high = vcombine_u16(
                 vmovn_u32(vcvtnq_u32_f32(f32x4_pixel_m_high_low)),
