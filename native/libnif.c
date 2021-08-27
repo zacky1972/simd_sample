@@ -111,6 +111,27 @@ int upgrade(ErlNifEnv *caller_env, void **priv_data, void **old_priv_data, ERL_N
     return load(caller_env, priv_data, load_info);
 }
 
+#if __arm__
+static float mono_r_16[] = {
+    0.299, 0.299, 0.299, 0.299, 
+    0.299, 0.299, 0.299, 0.299, 
+    0.299, 0.299, 0.299, 0.299, 
+    0.299, 0.299, 0.299, 0.299, 
+};
+static float mono_g_16[] = {
+    0.587, 0.587, 0.587, 0.587,
+    0.587, 0.587, 0.587, 0.587,
+    0.587, 0.587, 0.587, 0.587,
+    0.587, 0.587, 0.587, 0.587,
+};
+static float mono_b_16[] = {
+    0.114, 0.114, 0.114, 0.114,
+    0.114, 0.114, 0.114, 0.114,
+    0.114, 0.114, 0.114, 0.114,
+    0.114, 0.114, 0.114, 0.114,
+};
+#endif
+
 uint64_t soa1(rgb_t init_pixel)
 {
     _Alignas(64) uint8_t pixel_r[SIZE];
@@ -124,7 +145,105 @@ uint64_t soa1(rgb_t init_pixel)
     }
     // In monochrome
     for(uint_fast32_t k = 0; k < LOOP; k++) {
-#if __x86_64__ 
+#if __arm__
+        float32x4_t f32x4_mono_r = vld1q_f32(mono_r_16);
+        float32x4_t f32x4_mono_g = vld1q_f32(mono_g_16);
+        float32x4_t f32x4_mono_b = vld1q_f32(mono_b_16);
+
+        for(uint_fast16_t i = 0; i < SIZE; i += 16) {
+            /*
+            uint8_t p = (uint8_t)round(0.299 * pixel_r[i] + 0.587 * pixel_g[i] + 0.114 * pixel_b[i]);
+            pixel_r[i] = p;
+            pixel_g[i] = p;
+            pixel_b[i] = p;
+            */
+
+            uint8x16_t u8x16_pixel_r = vld1q_u8(&pixel_r[i]);
+            uint8x16_t u8x16_pixel_g = vld1q_u8(&pixel_g[i]);
+
+            uint16x8_t u16x8_pixel_r_low  = vmovl_u8(vget_low_u8(u8x16_pixel_r));
+            uint16x8_t u16x8_pixel_r_high = vmovl_high_u8(u8x16_pixel_r);
+
+            uint16x8_t u16x8_pixel_g_low  = vmovl_u8(vget_low_u8(u8x16_pixel_g));
+            uint16x8_t u16x8_pixel_g_high = vmovl_high_u8(u8x16_pixel_g);
+
+            uint32x4_t u32x4_pixel_r_low_low  = vmovl_u16(vget_low_u16(u16x8_pixel_r_low));
+            uint32x4_t u32x4_pixel_r_low_high = vmovl_high_u16(u16x8_pixel_r_low);
+
+            uint32x4_t u32x4_pixel_g_low_low  = vmovl_u16(vget_low_u16(u16x8_pixel_g_low));
+            uint32x4_t u32x4_pixel_g_low_high = vmovl_high_u16(u16x8_pixel_g_low);
+
+            uint8x16_t u8x16_pixel_b = vld1q_u8(&pixel_b[i]);
+
+            float32x4_t f32x4_pixel_r_low_low = vcvtq_f32_u32(u32x4_pixel_r_low_low);
+            float32x4_t f32x4_pixel_g_low_low = vcvtq_f32_u32(u32x4_pixel_g_low_low);
+            float32x4_t f32x4_pixel_m_low_low = vmulq_f32(f32x4_pixel_r_low_low, f32x4_mono_r);
+
+            uint16x8_t u16x8_pixel_b_low  = vmovl_u8(vget_low_u8(u8x16_pixel_b));
+            uint16x8_t u16x8_pixel_b_high = vmovl_high_u8(u8x16_pixel_b);
+
+            f32x4_pixel_m_low_low = vmlaq_f32(f32x4_pixel_m_low_low, f32x4_pixel_g_low_low, f32x4_mono_g);
+
+            uint32x4_t u32x4_pixel_b_low_low  = vmovl_u16(vget_low_u16(u16x8_pixel_b_low));
+            uint32x4_t u32x4_pixel_b_low_high = vmovl_high_u16(u16x8_pixel_b_low);
+            float32x4_t f32x4_pixel_b_low_low = vcvtq_f32_u32(u32x4_pixel_b_low_low);
+
+            f32x4_pixel_m_low_low = vmlaq_f32(f32x4_pixel_m_low_low, f32x4_pixel_b_low_low, f32x4_mono_b);
+
+            float32x4_t f32x4_pixel_r_low_high = vcvtq_f32_u32(u32x4_pixel_r_low_high);
+            float32x4_t f32x4_pixel_g_low_high = vcvtq_f32_u32(u32x4_pixel_g_low_high);
+            float32x4_t f32x4_pixel_m_low_high = vmulq_f32(f32x4_pixel_r_low_high, f32x4_mono_r);
+
+            f32x4_pixel_m_low_high = vmlaq_f32(f32x4_pixel_m_low_high, f32x4_pixel_g_low_high, f32x4_mono_g);
+            float32x4_t f32x4_pixel_b_low_high = vcvtq_f32_u32(u32x4_pixel_b_low_high);
+            f32x4_pixel_m_low_high = vmlaq_f32(f32x4_pixel_m_low_high, f32x4_pixel_b_low_high, f32x4_mono_b);
+
+            uint16x8_t u16x8_pixel_m_low = vcombine_u16(
+                vmovn_u32(vcvtnq_u32_f32(f32x4_pixel_m_low_low)),
+                vmovn_u32(vcvtnq_u32_f32(f32x4_pixel_m_low_high))
+            );
+
+            uint32x4_t u32x4_pixel_r_high_low  = vmovl_u16(vget_low_u16(u16x8_pixel_r_high));
+            uint32x4_t u32x4_pixel_r_high_high = vmovl_high_u16(u16x8_pixel_r_high);
+
+            uint32x4_t u32x4_pixel_g_high_low  = vmovl_u16(vget_low_u16(u16x8_pixel_g_high));
+            uint32x4_t u32x4_pixel_g_high_high = vmovl_high_u16(u16x8_pixel_g_high);
+
+            float32x4_t f32x4_pixel_r_high_low = vcvtq_f32_u32(u32x4_pixel_r_high_low);
+            float32x4_t f32x4_pixel_g_high_low = vcvtq_f32_u32(u32x4_pixel_g_high_low);
+            float32x4_t f32x4_pixel_m_high_low = vmulq_f32(f32x4_pixel_r_high_low, f32x4_mono_r);
+
+            f32x4_pixel_m_high_low = vaddq_f32(f32x4_pixel_m_high_low, vmulq_f32(f32x4_pixel_g_high_low, f32x4_mono_g));
+
+            uint32x4_t u32x4_pixel_b_high_low  = vmovl_u16(vget_low_u16(u16x8_pixel_b_high));
+            uint32x4_t u32x4_pixel_b_high_high = vmovl_high_u16(u16x8_pixel_b_high);
+            float32x4_t f32x4_pixel_b_high_low = vcvtq_f32_u32(u32x4_pixel_b_high_low);
+
+            f32x4_pixel_m_high_low = vaddq_f32(f32x4_pixel_m_high_low, vmulq_f32(f32x4_pixel_b_high_low, f32x4_mono_b));
+
+            float32x4_t f32x4_pixel_r_high_high = vcvtq_f32_u32(u32x4_pixel_r_high_high);
+            float32x4_t f32x4_pixel_g_high_high = vcvtq_f32_u32(u32x4_pixel_g_high_high);
+            float32x4_t f32x4_pixel_m_high_high = vmulq_f32(f32x4_pixel_r_high_high, f32x4_mono_r);
+
+            f32x4_pixel_m_high_high = vaddq_f32(f32x4_pixel_m_high_high, vmulq_f32(f32x4_pixel_g_high_high, f32x4_mono_g));
+            float32x4_t f32x4_pixel_b_high_high = vcvtq_f32_u32(u32x4_pixel_b_high_high);
+            f32x4_pixel_m_high_high = vaddq_f32(f32x4_pixel_m_high_high, vmulq_f32(f32x4_pixel_b_high_high, f32x4_mono_b));
+
+            uint16x8_t u16x8_pixel_m_high = vcombine_u16(
+                vmovn_u32(vcvtnq_u32_f32(f32x4_pixel_m_high_low)),
+                vmovn_u32(vcvtnq_u32_f32(f32x4_pixel_m_high_high))
+            );
+
+            uint8x16_t u8x16_pixel_m = vcombine_u8(
+                vmovn_u16(u16x8_pixel_m_low),
+                vmovn_u16(u16x8_pixel_m_high)
+            );
+
+            vst1q_u8(&pixel_r[i], u8x16_pixel_m);
+            vst1q_u8(&pixel_g[i], u8x16_pixel_m);
+            vst1q_u8(&pixel_b[i], u8x16_pixel_m);
+        }
+#elif __x86_64__ 
 #if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
         for(uint_fast16_t i = 0; i < SIZE; i += 32) {
             __m256i pur_256, pug_256, pub_256;
