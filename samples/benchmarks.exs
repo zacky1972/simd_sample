@@ -8,4 +8,5 @@ Benchee.run(
     "soa0" => fn -> SimdSample.soa0_test() end,
     "soa1" => fn -> SimdSample.soa1_test() end
   }
-)
+) \
+|> then(fn _ -> :ok end)
