@@ -59,15 +59,19 @@ defmodule SimdSample do
   end
 
   def nx_aos32_test() do
-    init_pixel()
-    |> monochrome_filter_aos_32()
+    ip = init_pixel()
+
+    1..1000
+    |> Enum.reduce(fn _, _ -> monochrome_filter_aos_32(ip) end)
     |> Nx.sum()
     |> Nx.to_scalar()
   end
 
   def nx_aos16_test() do
-    init_pixel()
-    |> monochrome_filter_aos_16()
+    ip = init_pixel()
+
+    1..1000
+    |> Enum.reduce(fn _, _ -> monochrome_filter_aos_16(ip) end)
     |> Nx.sum()
     |> Nx.to_scalar()
   end
