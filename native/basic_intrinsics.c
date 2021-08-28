@@ -11,10 +11,3 @@ void init_basic_intrinsics()
 #endif
 }
 
-#if __x86_64__ 
-#if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
-
-extern inline void mm256_epi32_extract_epi8x(int index, __m256i *value, __m256i *result);
-
-#endif
-#endif
