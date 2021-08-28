@@ -43,6 +43,7 @@ defmodule SimdSample.MixProject do
       {:toolshed, "~> 0.2.13"},
       {:elixir_make, "~> 0.6.2", runtime: false},
       {:benchee, "~> 1.0", only: :dev},
+      {:nx, "~> 0.1.0-dev", github: "elixir-nx/nx", branch: "main", sparse: "nx"},
 
       # Dependencies for all targets except :host
       {:nerves_runtime, "~> 0.11.3", targets: @all_targets},
