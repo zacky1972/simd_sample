@@ -37,17 +37,17 @@ erl_crash.dump
 /configure~
 
 # For build files
-/native/.deps
-/native/.dirstamp
-/native/.libs
-/native/*.o
-/native/*.lo
+.deps
+.dirstamp
+.libs
+*.o
+*.lo
 /priv
 Makefile
 /build/
-/*.s
-/*.bc
-/*.i
+*.s
+*.bc
+*.i
 
 # For upload.sh
 /upload.sh

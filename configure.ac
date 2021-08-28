@@ -29,8 +29,12 @@ if test "x$CROSSCOMPILE" = "x"; then
 else
     AC_MSG_RESULT([yes])
     AS_CASE([$host_cpu],
-        [aarch64], [AC_DEFINE(__arm__, 1)])
+        [aarch64], [AC_DEFINE(__arm__, 1)]
+    )
 fi
+
+AM_CONDITIONAL(X86_64, [test x$host_cpu = xx86_64])
+AM_CONDITIONAL(ARM, [test x$host_cpu = xaarch64])
 
 AC_MSG_CHECKING([setting ERL_EI_INCLUDE_DIR])
 if test "x$ERL_EI_INCLUDE_DIR" = "x"; then
