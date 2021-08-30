@@ -69,13 +69,12 @@ AC_MSG_CHECKING([check sketch files])
 if test "x$cross_compiling" != "xyes"; then
     AC_CHECK_FILES([sketch/sketch.c], AM_CONDITIONAL(SKETCH_C, test true = true), AM_CONDITIONAL(SKETCH_C, test false = true))
 else
-    AS_IF([test -a "sketch/sketch.c"], [
+    AS_IF([test -e "sketch/sketch.c"], [
             AM_CONDITIONAL(SKETCH_C, test true = true)
             AC_DEFINE([HAVE_SKETCH_SKETCH_C], 1)
             AC_MSG_RESULT(["yes"])
         ], [ 
             AM_CONDITIONAL(SKETCH_C, test false = true)
-            AC_DEFINE([HAVE_SKETCH_SKETCH_C], 0)
             AC_MSG_RESULT(["no"])
         ]
     )

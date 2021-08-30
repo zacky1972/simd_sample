@@ -69,7 +69,7 @@ static ERL_NIF_TERM soa1_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 #ifdef HAVE_SKETCH_SKETCH_C
 ERL_NIF_TERM sketch(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 #else
-static ERL_NIF_TERM sketch(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM sketch(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     return enif_make_atom(env, "not_implemented");
 }
