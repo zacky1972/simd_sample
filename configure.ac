@@ -24,7 +24,12 @@ if test "x$CROSSCOMPILE" = "x"; then
     AC_MSG_CHECKING([setting host_cpu])
     AC_MSG_RESULT([$host_cpu])
     AS_CASE([$host_cpu],
-        [x86_64], [AX_CHECK_X86_FEATURES()],
+        [aarch64], 
+            [AC_DEFINE(__arm__, 1)],
+        AS_CASE([$host_cpu],
+            [x86_64], 
+                [AX_CHECK_X86_FEATURES()]
+        )
     )
 else
     AC_MSG_RESULT([yes])
