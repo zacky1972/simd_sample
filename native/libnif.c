@@ -66,6 +66,25 @@ static ERL_NIF_TERM soa1_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_uint64(env, r));
 }
 
+static ERL_NIF_TERM soa1_16_test(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+    rgb_t init_pixel;
+
+    // light purple
+    init_pixel.r = 0x9f;
+    init_pixel.g = 0x5a;
+    init_pixel.b = 0xae;
+
+    uint64_t r;
+#ifdef __arm__
+    r = soa1_16(init_pixel);
+#else
+    r = soa1(init_pixel);
+#endif
+
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_uint64(env, r));
+}
+
 #ifdef HAVE_SKETCH_SKETCH_C
 ERL_NIF_TERM sketch(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 #else
@@ -80,6 +99,7 @@ static ErlNifFunc nif_funcs[] =
     {"aos0_test", 0, aos0_test},
     {"soa0_test", 0, soa0_test},
     {"soa1_test", 0, soa1_test},
+    {"soa1_16_test", 0, soa1_16_test},
     {"sketch", 1, sketch}
 };
 

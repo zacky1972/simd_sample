@@ -82,6 +82,8 @@ defmodule SimdSample do
 
   def soa1_test(), do: raise("NIF soa1_test/0 not implemented")
 
+  def soa1_16_test(), do: raise("NIF soa1_16_test/0 not implemented")
+
   def sketch(), do: sketch(:ok)
 
   def sketch(_value), do: raise("NIF sketch/1 not implemented")
