@@ -213,7 +213,7 @@ void monochrome_filter_1(size_t size, uint8_t *pixel_r, uint8_t *pixel_g, uint8_
 
 void init_monochrome_filter_1()
 {
-#if defined(HAVE_AVX_INSTRUCTIONS)
+#if defined(HAVE_AVX_INSTRUCTIONS) && defined(HAVE_AVX2_INSTRUCTIONS)
     init_mono_256();
 #elif defined(HAVE_SSE_INSTRUCTIONS) && defined(HAVE_SSE3_INSTRUCTIONS) && defined(HAVE_SSE4_2_INSTRUCTIONS)
     _Alignas(64) float const mono_cons_r[] = {0.299, 0.299, 0.299, 0.299};
