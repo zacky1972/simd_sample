@@ -13,6 +13,7 @@ AC_ARG_VAR([ERL_LDFLAGS], [ERL_LDFLAGS])
 
 AC_PROG_CC
 AM_PROG_AR
+AM_PROG_AS
 
 AC_PATH_PROG(ELIXIR, $ELIXIR, elixir)
 
@@ -25,12 +26,10 @@ if test "x$CROSSCOMPILE" = "x"; then
     AC_MSG_RESULT([$host_cpu])
     AS_CASE([$host_cpu],
         [aarch64], 
-            [AC_DEFINE(__arm__, 1)],
-        AS_CASE([$host_cpu],
-            [x86_64], 
-                [AX_CHECK_X86_FEATURES()]
-        )
-    )
+            [AC_DEFINE(__arm__, 1)])
+    AS_CASE([$host_cpu],
+        [x86_64], 
+            [AX_CHECK_X86_FEATURES()])
 else
     AC_MSG_RESULT([yes])
     AS_CASE([$host_cpu],
