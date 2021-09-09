@@ -19,26 +19,25 @@ AC_PATH_PROG(ELIXIR, $ELIXIR, elixir)
 
 AC_CANONICAL_HOST
 
+AM_CONDITIONAL(X86_64, [test x$host_cpu = xx86_64])
+AM_CONDITIONAL(ARM, [test x$host_cpu = xaarch64])
+
 AC_MSG_CHECKING([setting CROSSCOMPILE])
 if test "x$CROSSCOMPILE" = "x"; then
     AC_MSG_RESULT([no])
     AC_MSG_CHECKING([setting host_cpu])
     AC_MSG_RESULT([$host_cpu])
-    AS_CASE([$host_cpu],
-        [aarch64], 
-            [AC_DEFINE(__arm__, 1)])
-    AS_CASE([$host_cpu],
-        [x86_64], 
-            [AX_CHECK_X86_FEATURES()])
+    if test "x$host_cpu" = "xaarch64"; then
+        AC_DEFINE(__arm__, 1)
+    elif test "x$host_cpu" = "xx86_64"; then
+        AX_CHECK_X86_FEATURES()
+    fi
 else
     AC_MSG_RESULT([yes])
-    AS_CASE([$host_cpu],
-        [aarch64], [AC_DEFINE(__arm__, 1)]
-    )
+    if test "x$host_cpu" = "xaarch64"; then
+        AC_DEFINE(__arm__, 1)
+    fi
 fi
-
-AM_CONDITIONAL(X86_64, [test x$host_cpu = xx86_64])
-AM_CONDITIONAL(ARM, [test x$host_cpu = xaarch64])
 
 AC_MSG_CHECKING([setting ERL_EI_INCLUDE_DIR])
 if test "x$ERL_EI_INCLUDE_DIR" = "x"; then

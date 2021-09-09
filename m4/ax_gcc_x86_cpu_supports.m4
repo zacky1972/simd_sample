@@ -100,9 +100,5 @@ AC_DEFUN([AX_GCC_X86_CPU_SUPPORTS],
           $2],
           [$3]
          )
-   AS_VAR_IF([gcc_x86_feature],[yes],
-          [AM_CONDITIONAL(AS_TR_CPP([HAVE_$1_INSTRUCTIONS]), true)],
-          [AM_CONDITIONAL(AS_TR_CPP([HAVE_$1_INSTRUCTIONS]), false)]
-         )
    AS_VAR_POPDEF([gcc_x86_feature])
 ])

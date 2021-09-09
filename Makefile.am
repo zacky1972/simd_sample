@@ -10,13 +10,11 @@ if ARM
 endif
 
 if X86_64
-if HAVE_AVX2_INSTRUCTIONS 
-AM_SRC += native/x86_64/avx2/monochrome_filter_1.s native/mm256_unsigned_extend_epi64_to_m256.c native/mm256_unsigned_extend_epi8_to_epi32.c native/mm256_round_cvtps_epi32.c
-else
-if HAVE_SSE_INSTRUCTIONS
+#if HAVE_AVX2_INSTRUCTIONS 
+#AM_SRC += native/x86_64/avx2/monochrome_filter_1.s native/mm256_unsigned_extend_epi64_to_m256.c native/mm256_unsigned_extend_epi8_to_epi32.c native/mm256_round_cvtps_epi32.c
+#else
 AM_SRC += native/x86_64/monochrome_filter_1.c native/mm256_unsigned_extend_epi64_to_m256.c native/mm256_unsigned_extend_epi8_to_epi32.c native/mm256_round_cvtps_epi32.c
-endif
-endif
+#endif
 endif
 
 if SKETCH_C
