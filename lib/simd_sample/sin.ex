@@ -18,12 +18,12 @@ defmodule SimdSample.Sin do
   end
 
   def sin32_1(x) when is_struct(x, Nx.Tensor) do
-    shape = Nx.shape(x)
-
-    Nx.reshape(x, {Nx.size(x)})
-    |> Nx.as_type({:f, 32})
+    if Nx.type(x) == {:f, 32} do
+      x
+    else
+      Nx.as_type(x, {:f, 32})
+    end
     |> sin32_1_sub()
-    |> Nx.reshape(shape)
   end
   def sin32_1(x) when is_float(x) do
     sin32_1_sub(Nx.tensor([x]))
