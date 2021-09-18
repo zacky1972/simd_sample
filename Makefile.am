@@ -6,7 +6,7 @@ lib_LTLIBRARIES = build/libnif.la
 AM_SRC = native/libnif.c native/aos0.c native/soa0.c native/soa1.c native/basic_intrinsics.c
 
 if ARM
-    AM_SRC += native/arm/monochrome_filter_1.c
+    AM_SRC += native/arm/monochrome_filter_1.s
 endif
 
 if X86_64
