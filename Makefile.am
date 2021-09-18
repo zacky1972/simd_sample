@@ -1,10 +1,11 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 
-lib_LTLIBRARIES = build/libnif.la build/libmonochrome_filter.la
+lib_LTLIBRARIES = build/libnif.la build/libmonochrome_filter.la build/libsin.la
 
 AM_LIBNIF_SRC = native/libnif.c
 AM_LIBMONOCHROME_FILTER_SRC = native/libmonochrome_filter.c native/aos0.c native/soa0.c native/soa1.c native/basic_intrinsics.c
+AM_LIBSIN_SRC = native/libsin.c
 
 if ARM
     AM_LIBMONOCHROME_FILTER_SRC += native/arm/monochrome_filter_1.s
@@ -22,11 +23,16 @@ endif
 
 build_libmonochrome_filter_la_SOURCES = $(AM_LIBMONOCHROME_FILTER_SRC)
 
+build_libsin_la_SOURCES = $(AM_LIBSIN_SRC)
+
 build_libnif_la_CFLAGS = $(CFLAGS) $(ERL_CFLAGS) -std=c11
 
 build_libmonochrome_filter_la_CFLAGS = $(CFLAGS) $(ERL_CFLAGS) -std=c11
+
+build_libsin_la_CFLAGS = $(CFLAGS) $(ERL_CFLAGS) -std=c11
 
 build_libnif_la_LDFLAGS = $(LDFLAGS) $(ERL_LDFLAGS) -shared -module -avoid-version -export-dynamic
 
 build_libmonochrome_filter_la_LDFLAGS = $(LDFLAGS) $(ERL_LDFLAGS) -shared -module -avoid-version -export-dynamic
 
+build_libsin_la_LDFLAGS = $(LDFLAGS) $(ERL_LDFLAGS) -shared -module -avoid-version -export-dynamic
