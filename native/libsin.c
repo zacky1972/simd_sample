@@ -23,6 +23,32 @@ void simd_sin32(uint64_t size, float *array)
     }
 }
 
+ERL_NIF_TERM sin32_1_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+    if(__builtin_expect(argc != 2, false)) {
+        return enif_make_badarg(env);
+    }
+    ErlNifUInt64 vec_size;
+    if(__builtin_expect(!enif_get_uint64(env, argv[0], &vec_size), false)) {
+        return enif_make_badarg(env);
+    }
+
+    ERL_NIF_TERM binary_term = argv[1];
+    ErlNifBinary binary_data;
+    if(__builtin_expect(!enif_term_to_binary(env, binary_term, &binary_data), false)) {
+        return enif_make_badarg(env);
+    }
+
+    // calculate simd_sin32
+    float *array = (float *)(&binary_data.data[6]);
+    simd_sin32(vec_size, array);
+
+    if(__builtin_expect(enif_binary_to_term(env, binary_data.data, binary_data.size, &binary_term, 0) == 0, false)) {
+        return enif_make_badarg(env);
+    }
+    return binary_term;
+}
+
 ERL_NIF_TERM sin32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     if(__builtin_expect(argc != 1, false)) {
@@ -162,7 +188,8 @@ ERL_NIF_TERM sin32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 static ErlNifFunc nif_funcs[] =
 {
-    {"sin32_nif", 1, sin32_nif}
+    {"sin32_nif", 1, sin32_nif},
+    {"sin32_1_nif", 2, sin32_1_nif}
 };
 
 ERL_NIF_INIT(Elixir.SimdSample.Sin, nif_funcs, &load, NULL, &upgrade, NULL)

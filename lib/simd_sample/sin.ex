@@ -17,6 +17,33 @@ defmodule SimdSample.Sin do
     end
   end
 
+  def sin32_1(x) when is_struct(x, Nx.Tensor) do
+    shape = Nx.shape(x)
+
+    Nx.reshape(x, {Nx.size(x)})
+    |> Nx.as_type({:f, 32})
+    |> sin32_1_sub()
+    |> Nx.reshape(shape)
+  end
+  def sin32_1(x) when is_float(x) do
+    sin32_1_sub(Nx.tensor([x]))
+  end
+  def sin32_1(x) when is_integer(x) do
+    sin32_1_sub(Nx.tensor([x * 1.0]))
+  end
+
+  defp sin32_1_sub(t) do
+    %{
+      t |
+      data: %{
+        t.data |
+        state: sin32_1_nif(Nx.size(t), t.data.state)
+      }
+    }
+  end
+
+  def sin32_1_nif(_size, _x), do: raise("NIF sin32_1_nif/2 not implemented")
+
   def sin32(x) when is_struct(x, Nx.Tensor) do
     shape = Nx.shape(x)
 
