@@ -6,9 +6,11 @@ input_u8 = Nx.iota({255}, type: {:u, 8})
 
 result32 = gamma32(input_u8, median_point_32) |> Nx.sum() |> Nx.to_scalar()
 result16 = gamma16(input_u8, median_point_16) |> Nx.sum() |> Nx.to_scalar()
+^result32 = gamma32_n(input_u8, 1.5) |> Nx.sum() |> Nx.to_scalar()
 
 Benchee.run(
   %{
+    "nif_32" => fn -> gamma32_n(input_u8, 1.5) end,
     "nx_32" => fn -> gamma32(input_u8, median_point_32) end,
     "nx_16" => fn -> gamma16(input_u8, median_point_16) end,
   }
