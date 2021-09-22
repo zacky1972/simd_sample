@@ -62,7 +62,7 @@ AC_MSG_RESULT([$ERL_CFLAGS])
 
 AC_MSG_CHECKING([setting ERL_LDFLAGS])
 if test "x$ERL_LDFLAGS" = "x"; then
-    AC_SUBST([ERL_LDFLAGS], [$(LC_ALL=en_US.UTF-8 $ELIXIR --eval '"-I#{System.get_env("ERL_EI_INCLUDE_DIR", "#{to_string(:code.root_dir)}/usr/lib")}" |> IO.puts')])
+    AC_SUBST([ERL_LDFLAGS], [$(LC_ALL=en_US.UTF-8 $ELIXIR --eval '"-L#{System.get_env("ERL_EI_LIBDIR", "#{to_string(:code.root_dir)}/usr/lib")}" |> IO.puts')])
 fi
 AC_MSG_RESULT([$ERL_LDFLAGS])
 
