@@ -36,7 +36,7 @@ ERL_NIF_TERM gamma32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
     ERL_NIF_TERM binary_term = argv[1];
     ErlNifBinary binary_data;
-    if(__builtin_expect(!enif_term_to_binary(env, binary_term, &binary_data), false)) {
+    if(__builtin_expect(!enif_inspect_binary(env, binary_term, &binary_data), false)) {
         return enif_make_badarg(env);
     }
 
@@ -46,13 +46,10 @@ ERL_NIF_TERM gamma32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     }
 
     // calculate simd_gamma32
-    uint8_t *array = (uint8_t *)(&binary_data.data[6]);
+    uint8_t *array = (uint8_t *)binary_data.data;
     simd_gamma32(vec_size, array, gamma);
 
-    if(__builtin_expect(enif_binary_to_term(env, binary_data.data, binary_data.size, &binary_term, 0) == 0, false)) {
-        return enif_make_badarg(env);
-    }
-    return binary_term;
+    return enif_make_binary(env, &binary_data);
 }
 
 static ErlNifFunc nif_funcs[] =

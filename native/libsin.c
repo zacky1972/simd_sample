@@ -35,18 +35,15 @@ ERL_NIF_TERM sin32_1_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
     ERL_NIF_TERM binary_term = argv[1];
     ErlNifBinary binary_data;
-    if(__builtin_expect(!enif_term_to_binary(env, binary_term, &binary_data), false)) {
+    if(__builtin_expect(!enif_inspect_binary(env, binary_term, &binary_data), false)) {
         return enif_make_badarg(env);
     }
 
     // calculate simd_sin32
-    float *array = (float *)(&binary_data.data[6]);
+    float *array = (float *)binary_data.data;
     simd_sin32(vec_size, array);
 
-    if(__builtin_expect(enif_binary_to_term(env, binary_data.data, binary_data.size, &binary_term, 0) == 0, false)) {
-        return enif_make_badarg(env);
-    }
-    return binary_term;
+    return enif_make_binary(env, &binary_data);
 }
 
 ERL_NIF_TERM sin32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -142,12 +139,12 @@ ERL_NIF_TERM sin32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
     ErlNifBinary binary_data;
-    if(__builtin_expect(!enif_term_to_binary(env, binary_term, &binary_data), false)) {
+    if(__builtin_expect(!enif_inspect_binary(env, binary_term, &binary_data), false)) {
         return enif_make_badarg(env);
     }
 
     // calculate simd_sin32
-    float *array = (float *)(&binary_data.data[6]);
+    float *array = (float *)binary_data.data;
     simd_sin32(vec_size, array);
 
     // keep names
@@ -158,9 +155,7 @@ ERL_NIF_TERM sin32_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     }
 
     // make return value
-    if(__builtin_expect(enif_binary_to_term(env, binary_data.data, binary_data.size, &binary_term, 0) == 0, false)) {
-        return enif_make_badarg(env);
-    }
+    binary_term = enif_make_binary(env, &binary_data);
     if(__builtin_expect(!enif_make_map_from_arrays(env, &state_atom, &binary_term, 1, &data), false)) {
         return enif_make_badarg(env);
     }
